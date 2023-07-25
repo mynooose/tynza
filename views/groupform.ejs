@@ -1,0 +1,37 @@
+<%- include('partials/header'); -%>
+
+
+
+
+
+<div class="group-page">
+
+
+
+
+      <div class="login-form-area">
+          <h1>Create Group</h1>
+              <form class="login-form" action="/groupform" method="post">
+                <div class="lable-input">
+                  <label class="form-label">Group Name</label>
+                  <input type="text" name="groupname" value="" autocomplete="off">
+                </div>
+                <div class="lable-input">
+                  <label class="form-label">Members</label>
+                  <input type="text" name="members" value="" autocomplete="off" multiple>
+                </div>
+                <div class="button-login">
+                  <button type="submit" class="login-page-button" name="button">Create</button>
+                </div>
+
+              </form>
+
+
+      </div>
+
+
+
+</div>
+
+
+<%- include('partials/footer'); -%>

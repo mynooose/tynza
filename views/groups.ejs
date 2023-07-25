@@ -1,0 +1,27 @@
+<%- include('partials/header'); -%>
+<h1>Groups</h1>
+
+<% const colors = ['#E6E9FE', '#FFE5F8', '#E5F8FF', '#ffffff', '#FDF7C3','#FFE4CC']; %>
+<%let j =0;%>
+
+
+<div class="group-names">
+  <%for(const group of groupInfo){%>
+
+      <a class="header-nav" href="/groupinfo/<%=group.groupId._id%>">
+        <div class="group-name" style="background-color: <%= colors[j % colors.length] %>;">
+          <p><%= group.groupName %></p>
+        </div>
+      </a>
+
+      <%j++;%>
+
+
+  <%}%>
+
+</div>
+
+
+
+
+ <%- include('partials/footer'); -%>

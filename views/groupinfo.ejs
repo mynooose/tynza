@@ -1,0 +1,61 @@
+<%- include('partials/header'); -%>
+
+<div class="dashboard">
+
+<form class="login-form" action="/addMemberToGroup" method="post">
+      <div class="lable-input">
+        <label class="form-label">Add Member:</label>
+        <input type="text" name="newMember"  autocomplete="off">
+        <input type="hidden" name="groupIdReceived" value="<%=groupIdReceived%>">
+      </div>
+      <div class="button-login">
+        <button type="submit" class="login-page-button" name="button">Add</button>
+      </div>
+</form>
+
+
+<% const colors = ['#E6E9FE', '#FFE5F8', '#E5F8FF', '#ffffff', '#FDF7C3','#FFE4CC']; %>
+<%let j =0;%>
+
+<%for(const [member,groupData] of fetchedUsers.entries()){%>
+
+
+    <div class="one-group-at-info" style="background-color: <%= colors[j % colors.length] %>;">
+
+    <div class="group-name-home">
+        <h2><%=member.username%></h2>
+    </div>
+
+  <%for(const listItem of groupData.tasks){%>
+
+    <form class="list-form" action="/updateStatus" method="post">
+      <div class="one-task <%= listItem.status === 'no' ? 'task-incomplete' : 'task-complete' %>">
+        <input type="checkbox" name="checkBox" value="<%=listItem._id%>_<%=groupIdReceived%>" onChange="submit()"   >
+        <p><%=listItem.name%></p>
+
+
+      </div>
+
+    </form>
+  <%}%>
+
+ <%if(myUserName === member.username){%>
+   <form class="" action="/groupinfo" method="post">
+     <input type="text" name="newItem" value="" autofocus>
+     <button type="submit" name="button" value="<%=groupIdReceived%>">+</button>
+   </form>
+ <%}%>
+
+
+</div>
+
+<%j++;%>
+
+<%}%>
+
+
+
+
+</div>
+
+ <%- include('partials/footer'); -%>

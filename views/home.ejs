@@ -1,0 +1,47 @@
+<%- include('partials/header'); -%>
+
+
+<h1>My Tasks</h1>
+
+<div class="dashboard">
+
+<% const colors = ['#E6E9FE', '#FFE5F8', '#E5F8FF', '#ffffff', '#FDF7C3','#FFE4CC']; %>
+<%let j =0;%>
+
+
+<%for(const [groupName,groupData] of groupwiseTasks.entries()){%>
+
+<a href="/groupinfo/<%=groupData.groupId%>">
+
+  <div class="one-group-at-home" style="background-color: <%= colors[j % colors.length] %>;">
+  <div class="group-name-home">
+      <h2> <%= `${groupName}` %> </h2>
+  </div>
+
+  <%let i =0;%>
+  <%for(const task of groupData.tasks){%>
+    <%if(i<3){%>
+      <form class="list-form" action="/updateStatus" method="post">
+        <div class="one-task <%= task.status === 'no' ? 'task-incomplete' : 'task-complete' %>">
+          <input type="checkbox" name="checkBox" value="<%=task._id%>"  >
+          <p><%=task.name%></p>
+
+
+        </div>
+
+      </form>
+    <%}else{%>
+      <%break;%>
+    <%}%>
+
+    <%i++;%>
+  <%}%>
+
+  </div>
+<%j++;%>
+</a>
+<%}%>
+
+</div>
+
+<%- include('partials/footer'); -%>

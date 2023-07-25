@@ -1,0 +1,120 @@
+<%- include('partials/header'); -%>
+
+
+
+
+<div class="heading">
+  <h1>Dashboard</h1>
+</div>
+
+
+
+
+<div class="dashboard">
+
+
+
+
+    <div class="partition">
+
+
+
+
+          <div class="cards">
+              <div class="user-name">
+                  <h2>  <%= myList.name %>  </h2>
+              </div>
+
+              <%myList.listItems.forEach((item, j) => { %>
+                <%if(j < 3){ %>
+                        <form class="item-list" action="/" method="post">
+                          <div class="items">
+                            <input type="checkbox" name="checkBox" disabled <%if(item.status===0){ %> checked <%}%>>
+                            <p> <%= item.name %> </p>
+                            <% if(item.status===0){ %>
+                              <style>
+                                .items{
+                                  text-decoration: line-through;
+                                  text-decoration-color: #FE0000;
+                                }
+                              </style>
+                            <%} else{ %>
+                            <style>
+                              .items{
+                                text-decoration:none;
+                                text-decoration-color: red;
+                              }
+                            </style>
+                          <%  } %>
+
+                          </div>
+                        </form>
+                  <%}%>
+                <%}); %>
+
+                <form  class="item"  action="/" method="post" >
+                  <input type="text" name="newItem" placeholder="Add Item" autofocus="autofocus"autocomplete="off">
+                  <button type="submit" name="button" >+</button>
+                </form>
+        </div>
+
+
+  </div>
+
+
+    <div class="partition">
+
+        <% allUsers.forEach((user, i) => { %>
+          <% if(user.name !== myList.name ){ %>
+
+          <div class="cards">
+            <div class="user-name">
+                <h2>  <%= user.name %>  </h2>
+            </div>
+            <%user.listItems.forEach((item, j) => { %>
+              <%if(j < 3){ %>
+                      <form class="item-list" action="/" method="post">
+                        <div class="items">
+                          <input type="checkbox" name="checkBox" disabled <%if(item.status===0){ %> checked <%}%> >
+                          <p> <%= item.name %> </p>
+
+                          <% if(item.status===0){ %>
+                            <style>
+                              .items{
+                                text-decoration: line-through;
+                                text-decoration-color: #A683E3;
+                              }
+                            </style>
+                          <%} else{ %>
+                          <style>
+                            .items{
+                              text-decoration:none;
+                            }
+                          </style>
+                        <%  } %>
+
+                        </div>
+                      </form>
+                <%}%>
+              <%}); %>
+
+
+
+          </div>
+
+        <%}%>
+          <% }); %>
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<%- include('partials/footer'); -%>
