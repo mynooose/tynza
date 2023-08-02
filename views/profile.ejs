@@ -1,5 +1,13 @@
 <%- include('partials/header'); -%>
 
-<h1> Hey <%=myUserDocument.username%>!</h1>
+
+<div style="display:flex; flex-direction: row;" class="">
+  <h1> Hey <%=myUserDocument.name%></h1>
+
+  <div style="display:flex; flex-direction: row; align-items:center;  justify-content:center;width: 100%;" class="">
+    <a style="font-size:30px;background-color:#64CCC5;padding:10px;" href="/logout">Logout</a>
+  </div>
+
+</div>
 
 <%- include('partials/footer'); -%>

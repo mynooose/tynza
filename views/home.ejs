@@ -1,7 +1,7 @@
 <%- include('partials/header'); -%>
 
 
-<h1>My Tasks</h1>
+<h1 style="margin-left:30px;">My Tasks</h1>
 
 <div class="dashboard">
 
@@ -9,21 +9,27 @@
 <%let j =0;%>
 
 
-<%for(const [groupName,groupData] of groupwiseTasks.entries()){%>
+<%for(const [groupId,groupData] of groupwiseTasks.entries()){%>
 
 <a href="/groupinfo/<%=groupData.groupId%>">
 
   <div class="one-group-at-home" style="background-color: <%= colors[j % colors.length] %>;">
   <div class="group-name-home">
-      <h2> <%= `${groupName}` %> </h2>
+      <h2> <%= groupData.groupName%> </h2>
+      <h4 style="color:#82CD47;">Score : <%=groupData.score%>%</h4>
   </div>
+</a>
+
+  <hr style="width:80%;text-align:left;margin:5px;margin-left : 0">
 
   <%let i =0;%>
   <%for(const task of groupData.tasks){%>
-    <%if(i<3){%>
+    <%if(i<4){%>
       <form class="list-form" action="/updateStatus" method="post">
-        <div class="one-task <%= task.status === 'no' ? 'task-incomplete' : 'task-complete' %>">
-          <input type="checkbox" name="checkBox" value="<%=task._id%>"  >
+        <div class="one-task <%= task.status === 'complete' ? 'task-complete' : 'task-incomplete' %>">
+          <input type="checkbox" name="checkBox" value="<%=task._id%>_<%=groupId%>" onChange="submit()"
+           >
+          <input type="hidden" name="requestOrigin" value="requestFromHome">
           <p><%=task.name%></p>
 
 
@@ -31,6 +37,10 @@
 
       </form>
     <%}else{%>
+      <div style="display: flex; justify-content: flex-end; width: 100%;">
+        <a style="color: #F11A7B;" href="/groupinfo/<%=groupData.groupId%>">++more</a>
+      </div>
+
       <%break;%>
     <%}%>
 
@@ -39,7 +49,7 @@
 
   </div>
 <%j++;%>
-</a>
+
 <%}%>
 
 </div>

@@ -3,6 +3,7 @@
 <div class="dashboard">
 
 <form class="login-form" action="/addMemberToGroup" method="post">
+      <p style="font-size:60px; color:black;"><%=groupName%></p>
       <div class="lable-input">
         <label class="form-label">Add Member:</label>
         <input type="text" name="newMember"  autocomplete="off">
@@ -23,16 +24,32 @@
     <div class="one-group-at-info" style="background-color: <%= colors[j % colors.length] %>;">
 
     <div class="group-name-home">
-        <h2><%=member.username%></h2>
+        <h2><%=member.name%></h2>
+        <h4 style="color:#82CD47;">Today : <%=groupData.score%>%</h4>
+        <h4 style="color:#82CD47;">Points : <%=groupData.monthlyScore%></h4>
     </div>
+    <hr style="width:80%;text-align:left;margin:5px;margin-left : 0">
 
   <%for(const listItem of groupData.tasks){%>
 
     <form class="list-form" action="/updateStatus" method="post">
-      <div class="one-task <%= listItem.status === 'no' ? 'task-incomplete' : 'task-complete' %>">
-        <input type="checkbox" name="checkBox" value="<%=listItem._id%>_<%=groupIdReceived%>" onChange="submit()"   >
-        <p><%=listItem.name%></p>
+      <div class="one-task">
 
+        <div class="one-task-content">
+
+          <input type="checkbox" name="checkBox" value="<%=listItem._id%>_<%=groupIdReceived%>" onChange="submit()"
+            <% if (myUserName !== member.username) { %> disabled <% } %>>
+          <input type="hidden" name="requestOrigin" value="requestFromGroupInfo">
+          <p class="one-task <%= listItem.status === 'pending' ? 'task-incomplete' : 'task-complete' %>"><%=listItem.name%></p>
+        </div>
+
+         <%if(myUserName === member.username){%>
+        <div class="one-task-options">
+          <button style="background-color: <%= colors[j % colors.length] %>; color:#F11A7B;font-size:15px;"
+            type="button" class="deleteButton"
+            onclick="confirmDelete('<%=groupIdReceived%>', '<%=listItem._id%>','<%=listItem.name%>')">Delete</button>
+        </div>
+         <%}%>
 
       </div>
 
@@ -40,14 +57,17 @@
   <%}%>
 
  <%if(myUserName === member.username){%>
-   <form class="" action="/groupinfo" method="post">
-     <input type="text" name="newItem" value="" autofocus>
-     <button type="submit" name="button" value="<%=groupIdReceived%>">+</button>
+   <form class="add-item-input" action="/groupinfo" method="post">
+     <input maxlength="15" style ="border-radius:5px; width :70%; border: 2px solid #DDE6ED;" type="text" name="newItem" minlength="1" autofocus autocomplete="off">
+     <button style="background-color : #314CF9; color : white; border-radius :10px"
+     type="submit" name="button" value="<%=groupIdReceived%>">+</button>
    </form>
  <%}%>
 
 
 </div>
+
+
 
 <%j++;%>
 
@@ -57,5 +77,77 @@
 
 
 </div>
+
+<div id="confirmationPopup" class="popup">
+  <div class="popup-content">
+    <p id="confirmationText">Are you sure you want to delete this task?</p>
+    <button class="popup-button-no" onclick="cancelDelete()">Cancel</button>
+    <button class="popup-button-yes" onclick="proceedDelete()">Delete</button>
+  </div>
+</div>
+
+<script>
+
+  let confirmedGroupId, confirmedTaskId,confirmedTaskName; // Variables to store the groupId and taskId for deletion
+
+  function confirmDelete(groupId, taskId, taskName) {
+    // Store groupId and taskId in the global variables
+    confirmedGroupId = groupId;
+    confirmedTaskId = taskId;
+    confirmedTaskName = taskName;
+
+
+    const confirmationText = document.getElementById('confirmationText');
+    confirmationText.textContent = `Are you sure you want to delete "${confirmedTaskName}"?`;
+
+
+    // Display the confirmation pop-up
+    const popup = document.getElementById('confirmationPopup');
+    popup.style.display = 'flex';
+  }
+
+  function cancelDelete() {
+    // Hide the confirmation pop-up
+    const popup = document.getElementById('confirmationPopup');
+    popup.style.display = 'none';
+  }
+
+  function proceedDelete() {
+    // Hide the confirmation pop-up
+    const popup = document.getElementById('confirmationPopup');
+    popup.style.display = 'none';
+
+    // Proceed with task deletion
+    deleteTask(confirmedGroupId, confirmedTaskId);
+  }
+
+
+
+
+  function deleteTask(groupId, taskId) {
+    const form = document.createElement('form');
+    form.action = '/deleteTask'; // Replace this with the actual route on the server for deleting tasks
+    form.method = 'POST';
+
+    const groupIdInput = document.createElement('input');
+    groupIdInput.type = 'hidden';
+    groupIdInput.name = 'groupId';
+    groupIdInput.value = groupId;
+
+    const taskIdInput = document.createElement('input');
+    taskIdInput.type = 'hidden';
+    taskIdInput.name = 'taskId';
+    taskIdInput.value = taskId;
+
+    form.appendChild(groupIdInput);
+    form.appendChild(taskIdInput);
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+</script>
+
+
+
 
  <%- include('partials/footer'); -%>

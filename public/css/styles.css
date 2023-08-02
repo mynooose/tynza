@@ -116,7 +116,6 @@ body{
 .add-item{
   display: flex;
   align-items: flex-end;
-
   flex-wrap: wrap;
   flex: 1;
 }
@@ -125,11 +124,6 @@ button{
     border-radius: 10%;
 }
 
-
-input:checked+p {
-  text-decoration: line-through;
-  text-decoration-color: #A683E3;
-}
 
 
 
@@ -172,8 +166,8 @@ footer{
   align-items: flex-start;
   justify-content: flex-start;
   width: 250px;
-  height: 250px;
-  margin: 10px;
+  height: 340px;
+  margin: 20px;
   padding: 10px;
   border: 1px solid #9DB2BF;
   background-color: #B0DAFF;
@@ -190,25 +184,38 @@ footer{
   box-shadow: 5px 5px 10px #0000;
   border-radius: 10px;
   min-width: 250px;
+  min-height: 250px;
   border: 1px solid #9DB2BF;
   margin: 10px;
   padding: 10px;
   flex-grow: 1;
+  flex: 0 0 auto;
 }
 
 .group-name-home{
   font-weight: bold;
+
 }
 
 .login-form{
-  margin: 50px;
+  margin: 10px;
 }
 
 .one-task{
   display: flex;
   flex-direction: row;
+  align-items: center;
+  word-break: break-word;
 }
 
+.one-task-content{
+  display: flex;
+  flex-direction: row;
+}
+
+.one-task-options{
+margin-left: auto;
+}
 
 
 
@@ -221,6 +228,9 @@ footer{
 .image-space-login {
   flex: 1;
   background-color: #EFF1FE; /* Set background color for the left part */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .login-form-area {
@@ -242,10 +252,23 @@ footer{
 .button-login{
   background-color: #314CF9;
   border-radius: 10px;
+  width: 300px;
   display: flex;
-  margin-top: 40px;
+  margin-top: 20px;
   justify-content: center;
 
+}
+.button-login-google{
+  margin-top: 10px;
+  background-color: white;
+  border-radius: 5px;
+
+}
+
+a.btn-outline-dark:hover{
+  color: black;
+  background-color: white;
+  box-shadow: 1px 1px 3px grey;
 }
 
 .login-page-button{
@@ -257,7 +280,7 @@ footer{
 
 
 .signup-button-area{
-  margin-top: 50px;
+  margin-top: 0px;
   font-size: 15px;
 }
 
@@ -283,21 +306,18 @@ footer{
 }
 
 
-.task-incomplete {
+.task-complete {
   text-decoration: line-through;
   text-decoration-color: #FFB4B4;
 }
 
-.task-complete {
+.task-incomplete {
   text-decoration: none;
   text-decoration-color: #B2A4FF;
 }
 
 
-input:checked+p {
-  text-decoration: line-through;
-  text-decoration-color: #A683E3;
-}
+
 
 
 .group-names{
@@ -320,4 +340,106 @@ input:checked+p {
   border: 1px solid #9DB2BF;
   background-color: #B0DAFF;
   border-radius: 10px;
+}
+
+.image-at-login {
+  text-align: center; /* Center the image horizontally within its container */
+  display: flex; /* Enable flexbox layout */
+
+  justify-content: center; /* Center child elements vertically */
+}
+
+.image-at-login img{
+  max-width: 70%;
+  max-height: 70%;
+}
+
+
+.line-with-text {
+  position: relative;
+  text-align: center;
+  padding: 0 30px;
+}
+
+.line-with-text::before {
+  content: '';
+  display: block;
+  border-top: 1px solid grey;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+}
+
+.centered-text {
+  display: inline-block;
+  background-color: white;
+  padding: 0 10px;
+  position: relative;
+  z-index: 1;
+  font-size: 15px;
+  color: grey;
+}
+
+input[type="checkbox"]:checked  {
+  background-color: red; /* Change this to the desired background color */
+}
+
+.task-complete {
+  text-decoration: line-through;
+  text-decoration-color: #F11A7B;
+  text-decoration-style: dashed;
+}
+
+
+.popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.popup-button-yes{
+  background-color: #F11A7B;
+  color: white;
+  margin: 20px;
+}
+
+.popup-button-no{
+  background-color: #314CF9;
+  color: white;
+  margin: 20px;
+}
+
+.popup-button-yes:hover{
+  background-color: #D71313 ;
+  color: white;
+  cursor: pointer;
+  margin: 0;
+}
+
+.popup-button-no:hover{
+  background-color: #0D1282 ;
+  color: white;
+  cursor: pointer;
+  margin: 0;
+}
+
+button:hover{
+  background-color: #0D1282 ;
+  color: white;
+  cursor: pointer;
 }

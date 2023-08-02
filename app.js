@@ -7,6 +7,8 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const passport = require('passport');
 const passportLocalMongoose = require('passport-local-mongoose');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const findOrCreate = require('mongoose-findorcreate');
 
 const app = express();
 
@@ -15,9 +17,14 @@ app.use(bodyParser.urlencoded({extended : true}));
 app.use(express.static("public"));
 
 app.use(session({
-  secret : "my name is mynooose",
+  secret : process.env.SESSION_SECRET,
   resave : false,
-  saveUninitialized : false
+  saveUninitialized : false,
+  cookie: {
+  //secure: true,
+  httpOnly: true,
+  maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year (in milliseconds)
+}
 }))
 
 app.use(passport.initialize());
@@ -30,11 +37,13 @@ const userSchema = new mongoose.Schema({
   password : String,
   phone : Number,
   name : String,
+  googleId : String,
   groups : [{type: mongoose.Schema.Types.ObjectId, ref: 'Group'}]
   //listItems : [itemSchema]
 })
 
 userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(findOrCreate);
 
 const User = new mongoose.model("User", userSchema);
 
@@ -57,6 +66,22 @@ passport.deserializeUser(function(user, cb) {
 });
 
 
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/secrets",
+    scope: ['profile',"email"]
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    //console.log(JSON.stringify(profile));
+    console.log(profile.emails[0].value);
+    User.findOrCreate({ googleId: profile.id, username : profile.emails[0].value, name : profile.displayName }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
+
+
 app.get("/", function (req, res) {
   if(req.isAuthenticated()){
     res.redirect("/home");
@@ -65,6 +90,16 @@ app.get("/", function (req, res) {
   }
 })
 
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile',"email"] }));
+
+app.get('/auth/google/secrets',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+
+    // Successful authentication, redirect home.
+    res.redirect('/');
+  });
 // app.get("/login", function (req, res) {
 //     res.render("login");
 // })
@@ -116,26 +151,35 @@ app.post("/register", function (req, res) {
       if(password !== confirmPassword){
           console.log("Pasword mismatch");
           signupError = "Password mismatch";
-          res.render("register", {signupError : signupError});
+          res.status(400).render("register", {signupError : signupError});
+          console.log('Error:' + res.statusCode);
+          return;
+
       }else{
         User.register({username : req.body.username}, req.body.password,function ( err, user) {
           //console.log(user );
-          User.findOneAndUpdate({username :  req.body.username}, {name: req.body.name})
-          .then(function (foundUser) {
-            console.log("found user is" + foundUser.username);
-          })
-
           if(err){
-            console.log(err);
-            res.redirect("/register");
-          } else{
-            //console.log("trying authentication");
-            passport.authenticate("local")(req, res, function() {
-              //console.log("trying dasdada");
+                console.log(err);
+                return res.status(500).redirect("/register");
+          }else{
+                User.findOneAndUpdate({username :  req.body.username}, {name: req.body.name})
+                .then(function (foundUser) {
+                  console.log("found user is" + foundUser.username);
+                })
 
-              res.redirect('/');
-            })
+                if(err){
+                  console.log(err);
+                  res.status(500).redirect("/register");
+                } else{
+                  //console.log("trying authentication");
+                  passport.authenticate("local")(req, res, function() {
+                    //console.log("trying dasdada");
+
+                    res.redirect('/');
+                  })
+                }
           }
+
         })
       }
 
@@ -185,10 +229,7 @@ const Group = mongoose.model("Group", groupSchema);
 //item schema///////////////////////////////////
 const itemSchema = new mongoose.Schema({
   name : String,
-  status :  {
-    type: String,
-    enum: ['complete', 'pending']
-  },
+  status : String,
   isActive : String,
   recurring: {
     type: String,
@@ -203,6 +244,7 @@ const Item = mongoose.model("Item", itemSchema);
 const recordSchema = new mongoose.Schema({
   date : Date,
   score : Number,
+  userId : { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   listId : { type: mongoose.Schema.Types.ObjectId, ref: 'List' },
   items : [itemSchema]
 })
@@ -237,18 +279,87 @@ app.get("/groupinfo/:groupIdToBePassed", async function (req, res) {
       const myUserName = myUserDocument.username;
 
       const groupDocument = await Group.findById(groupIdReceived).populate('members');
+      const groupName = groupDocument.name;
       //console.log("Group Docs : " + groupDocument);
       const groupMembers = groupDocument.members;
       //console.log("Group Members : " + groupMembers);
       const fetchedUsers = new Map();
+
+      /////////////////date set for search///////////////////////////
+      const today = new Date(); // Get the current date
+      console.log("aaj ki date: " + today);
+
+      const startOfDay = new Date(today);
+      // Set the time to 00:00:00 for today's date
+      startOfDay.setHours(0, 0, 0, 0);
+
+      // Set the time to 23:59:59 for today's date
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      /////////////////date fetch///////////////////////////
 
       for (const member of groupMembers) {
 
         const list = await List.findOne({ userId: member._id, groupId: groupIdReceived }).populate('items');
         //console.log("Tynza : GroupInfo : list is : " + list);
 
+
+
+        //////////////////monthly Score of a user(list)/////////////////////////
+        const dateObject = new Date();
+        const year = dateObject.getFullYear();
+        const month = dateObject.getMonth(); // Months are zero-indexed, so add 1
+        const day = dateObject.getDate();
+
+        dateObject.setFullYear(year, month, 1);
+
+        console.log("dateobject: " + dateObject);
+
+        let i=1;
+        let monthlyScore = 0;
+        while(i<=day){
+          dateObject.setDate(i);
+          console.log("dateobject: " + dateObject);
+          const startOfDay = new Date(dateObject);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(dateObject);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          const recordWithTodaysDate = await Record.findOne({
+            listId: list._id,
+            date: {
+              $gte: startOfDay,
+              $lte: endOfDay,
+            },
+          });
+
+          i++;
+          if(!recordWithTodaysDate)
+            continue;
+
+          monthlyScore+=recordWithTodaysDate.score;
+
+
+        }
+        console.log("score monthly: " ,member.username, Math.round(monthlyScore));
+
+
+
+        //////////////////monthly Score of a user(list)/////////////////////////
+
+        //fetching score for particular list of Today
+        const recordWithTodaysDate = await Record.findOne({
+          listId: list._id,
+          date: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
+        });
+
         //initial filling the map with empty values
         fetchedUsers.set(member, {
+          score : recordWithTodaysDate ? Math.round(recordWithTodaysDate.score) : 0,
+          monthlyScore : Math.round(monthlyScore),
           tasks: []
         });
 
@@ -272,7 +383,7 @@ app.get("/groupinfo/:groupIdToBePassed", async function (req, res) {
       }
 
       //console.log("Tynza : FetchedUSers in groupinfo" + fetchedUsers);
-      await res.render("groupinfo", { fetchedUsers, groupIdReceived, myUserName });
+      await res.render("groupinfo", { fetchedUsers, groupIdReceived, myUserName,groupName });
     } catch (err) {
       console.log(err);
     }
@@ -282,30 +393,191 @@ app.get("/groupinfo/:groupIdToBePassed", async function (req, res) {
 });
 
 
+
+
+
+app.post('/deleteTask', function (req, res) {
+
+  if(req.isAuthenticated){
+  const groupId = req.body.groupId;
+  const taskId = req.body.taskId;
+
+  deleteTaskFromList();
+
+  async function deleteTaskFromList(){
+    /////////////////date set for search///////////////////////////
+    const today = new Date(); // Get the current date
+    console.log("aaj ki date: " + today);
+
+    const startOfDay = new Date(today);
+    // Set the time to 00:00:00 for today's date
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Set the time to 23:59:59 for today's date
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+    /////////////////date fetch///////////////////////////
+
+    const fetchedItem = await Item.findOne({_id : taskId});
+    //const fetchedList = await List.findOne({_id : fetchedItem.listId});
+
+    const fetchedList = await List.findOneAndUpdate({_id : fetchedItem.listId} , {$pull: { items: taskId}},{ new: true });
+    const totalTodosLeft = fetchedList.items.length;
+    console.log("totalTodosBeforeDeletion : " + totalTodosLeft);
+
+    //fetching score for particular list
+    const recordWithTodaysDate = await Record.findOneAndUpdate(
+      {
+        listId: fetchedItem.listId,
+        date: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        }
+
+      },
+      {
+        $pull: { 'items': { _id: taskId } },
+      },
+      { new: true } // This option returns the updated document
+    ).exec(); // Add .exec() to actually execute the query
+
+    console.log("recored : " + recordWithTodaysDate);
+    let totalCompletedToDos = 0;
+    let updatedScore = 0;
+    if(recordWithTodaysDate){
+       totalCompletedToDos =  recordWithTodaysDate.items.length;
+    }
+    if(totalTodosLeft){
+      updatedScore = totalCompletedToDos/(totalTodosLeft)*100;
+    }else{
+      updatedScore = 0;
+    }
+
+
+    await Record.updateOne({
+        listId: fetchedItem.listId,
+        date: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        }
+      },
+      {
+          $set: { 'score': updatedScore }
+      });
+
+
+    await Item.findOneAndDelete({_id : taskId})
+    .then(function () {
+       res.redirect(`/groupinfo/${groupId}`);
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+  }
+}  else {
+    res.redirect("/login");
+}
+});
+
+
+
+
 //changing status of a task
 app.post("/updateStatus", function (req, res) {
   console.log("Tynza : POST :: /updateStatus route.");
   const checkBoxValue = req.body.checkBox;
+  const requestOrigin = req.body.requestOrigin;
   console.log("checkBoxValue : " + checkBoxValue);
   const [itemId , groupId] = checkBoxValue.split("_");
+  const userId =  req.user.id;
 
   updateStatus();
 
   async function updateStatus(){
     try{
       const item = await Item.findOne({_id : itemId});
-      console.log("Item name & status is : " + item.name + " " + item.status);
-      if(item.status === "no"){
-        item.status = "yes";
+      console.log("Item name & list_id is : " + item.name + " " + item.listId);
+      const listDocument = await List.findOne({_id : item.listId});
+
+                          const totalToDos = listDocument.items.length;
+
+
+                          const today = new Date(); // Get the current date
+                          const startOfDay = new Date(today);
+                          startOfDay.setHours(0, 0, 0, 0);
+                          const endOfDay = new Date(today);
+                          endOfDay.setHours(23, 59, 59, 999);
+
+                          // Search for a record with today's date
+                          const recordWithTodaysDate = await Record.findOne({
+                            listId: item.listId,
+                            date: {
+                              $gte: startOfDay,
+                              $lte: endOfDay,
+                            },
+                          });
+
+
+                          const newItem = {
+                            _id : itemId,
+                            name: item.name,
+                            status: "complete", // Set the status as required
+                            listId: item.listId,
+                          };
+                          console.log("totalToDos: " + totalToDos);
+
+                          if (recordWithTodaysDate) {
+                            const totalCompletedToDos = recordWithTodaysDate.items.length;
+                            console.log("totalToDos: " + totalToDos);
+                            console.log("totalCompletedToDos: " + totalCompletedToDos);
+                            // Record with today's date exists, check if the item is already present
+                            const existingItemIndex = recordWithTodaysDate.items.findIndex(function(item) {
+                              return item._id.toString() === itemId; // Modify the condition based on your item identification criteria
+                            });
+
+                            if (existingItemIndex !== -1) {
+                              // Item already exists, remove it from the array
+                              recordWithTodaysDate.score = ((totalCompletedToDos-1)/totalToDos)*100;
+                              recordWithTodaysDate.items.splice(existingItemIndex, 1);
+                              await recordWithTodaysDate.save();
+                              console.log("Item removed from existing record:", newItem);
+                            } else {
+                              // Item does not exist, push the new item to its items array
+                              recordWithTodaysDate.score = ((totalCompletedToDos+1)/totalToDos)*100;
+                              recordWithTodaysDate.items.push(newItem);
+                              await recordWithTodaysDate.save();
+                              console.log("Item added to existing record:", newItem);
+                            }
+                          } else {
+                            // No record found with today's date, create a new record and push the new item
+                            const newRecord = new Record({
+                              date: today,
+                              userId : userId,
+                              score: (1/totalToDos)*100, // Set the score as required
+                              listId: item.listId,
+                              items: [newItem],
+                            });
+                              console.log("aaj ki date: " + today);
+                            await newRecord.save();
+                            console.log("New record created with the item:", newItem);
+                          }
+
+
+      if(item.status === "complete"){
+        item.status = "pending";
         await item.save();
         //update database status to yes
       }else{
-        item.status = "no";
+        item.status = "complete";
         await item.save();
       }
 
+      if(requestOrigin === "requestFromGroupInfo"){
+        res.redirect(`/groupinfo/${groupId}`);
+      }else{
+        res.redirect("/home");
+      }
 
-      res.redirect(`/groupinfo/${groupId}`);
     }
     catch(error){
       console.log(error);
@@ -326,34 +598,83 @@ app.post("/groupinfo", function (req, res) {
   const itemToBeAdded = req.body.newItem;
   const groupId = req.body.button;
   const userId =  req.user.id;
-  if(itemToBeAdded === ""){
-      res.redirect(`/groupinfo/${groupId}`)
-  }
+  //console.log("item is : " + itemToBeAdded);
+
+      if(itemToBeAdded.trim().length === 0){
+          console.log("Khaali hai ");
+          res.redirect(`/groupinfo/${groupId}`);
+      }else {
+
+          //add item to the list
+          async function addItemToList(){
+            try{
+              let listDocument = await List.findOne({userId : userId, groupId : groupId});
+
+              const newItemObject = new Item({
+                name : itemToBeAdded,
+                status : "pending",
+                listId : listDocument._id
+              })
+              await newItemObject.save();
+              listDocument.items.push(newItemObject._id);
+              await listDocument.save();
+              //////////////score/////////////
+              const today = new Date(); // Get the current date
+              const startOfDay = new Date(today);
+              startOfDay.setHours(0, 0, 0, 0);
+              const endOfDay = new Date(today);
+              endOfDay.setHours(23, 59, 59, 999);
+
+              listDocument = await List.findOne({userId : userId, groupId : groupId});
+              let totalTodosLeft = listDocument.items.length;
+              const recordWithTodaysDate = await Record.findOne({
+                listId: listDocument._id,
+                date: {
+                  $gte: startOfDay,
+                  $lte: endOfDay,
+                },
+              });
+
+              let totalCompletedToDos = 0;
+              let updatedScore = 0;
+              if(recordWithTodaysDate){
+                 totalCompletedToDos =  recordWithTodaysDate.items.length;
+              }
+              if(totalTodosLeft){
+                updatedScore = totalCompletedToDos/(totalTodosLeft)*100;
+              }else{
+                updatedScore = 0;
+              }
+
+
+              await Record.updateOne({
+                  listId: listDocument._id,
+                  date: {
+                    $gte: startOfDay,
+                    $lte: endOfDay,
+                  }
+                },
+                {
+                    $set: { 'score': updatedScore }
+                });
+
+
+
+
+              res.redirect(`/groupinfo/${groupId}`);
+            }
+            catch(err){
+              console.log(err);
+            }
+
+          }
+
+          addItemToList();
+
+      }
   //console.log("id is :" + user.id);
 
 
-  //add item to the list
-  async function addItemToList(){
-    try{
-      const listDocument = await List.findOne({userId : userId, groupId : groupId});
-
-      const newItemObject = new Item({
-        name : itemToBeAdded,
-        status : "yes",
-        listId : listDocument._id
-      })
-      await newItemObject.save();
-      listDocument.items.push(newItemObject._id);
-      await listDocument.save();
-      res.redirect(`/groupinfo/${groupId}`)
-    }
-    catch(err){
-      console.log(err);
-    }
-
-  }
-
-  addItemToList();
 
 
 } else{
@@ -381,6 +702,31 @@ app.get("/home", function (req, res) {
 
             //loop through the fetched lists for a particular user
             for(const list of allLists){
+
+              /////////////////date set for search///////////////////////////
+              const today = new Date(); // Get the current date
+              console.log("aaj ki date: " + today);
+
+              const startOfDay = new Date(today);
+              // Set the time to 00:00:00 for today's date
+              startOfDay.setHours(0, 0, 0, 0);
+
+              // Set the time to 23:59:59 for today's date
+              const endOfDay = new Date(today);
+              endOfDay.setHours(23, 59, 59, 999);
+              /////////////////date fetch///////////////////////////
+
+              //fetching score for particular list
+              const recordWithTodaysDate = await Record.findOne({
+                listId: list._id,
+                date: {
+                  $gte: startOfDay,
+                  $lte: endOfDay,
+                },
+              });
+
+
+
                 //console.log(list);
                 for(const itemId of list.items){
                   //console.log("item is: " + item);
@@ -397,11 +743,13 @@ app.get("/home", function (req, res) {
                         const fetchedGroupName = fetchedGroupDocument.name;
 
                         //add group name and item to a map
-                        if(groupwiseTasks.has(fetchedGroupName)){
-                          groupwiseTasks.get(fetchedGroupName).tasks.push(itemDocument);
+                        if(groupwiseTasks.has(groupIdOfList)){
+                          groupwiseTasks.get(groupIdOfList).tasks.push(itemDocument);
                         }else{
-                            groupwiseTasks.set(fetchedGroupName, {
+                            groupwiseTasks.set(groupIdOfList, {
+                              groupName : fetchedGroupName,
                               groupId: groupIdOfList,
+                              score: recordWithTodaysDate ? Math.round(recordWithTodaysDate.score) : 0,
                               tasks: [itemDocument]
                             });
                         }
@@ -469,17 +817,17 @@ app.post("/groupform", function (req, res) {
       name : groupName
     })
 
-    updateGroup();
+    createOrUpdateGroup();
     //group.save();
     //console.log("Group created");
-    async function updateGroup() {
+    async function createOrUpdateGroup() {
       try {
         const myUserDocument = await User.findById(userId);
         const myUserName = myUserDocument.username;
 
-        membersString = membersString + " " + myUserName ;
+        membersString = membersString + "," + myUserName ;
 
-        const membersArray = membersString.split(" ");
+        const membersArray = membersString.split(",");
         console.log("All members input : " + membersString);
 
 
@@ -605,6 +953,47 @@ app.post("/addMemberToGroup", function functionName(req,res) {
   }
 
 })
+
+
+async function updateTaskStatusRegularly() {
+  // Your function code here
+  console.log('This function will be called at the specified time every day.');
+
+  const allItems = await Item.find();
+  console.log(allItems);
+  for(const item of allItems){
+    item.status = "pending";
+    await item.save();
+  }
+
+
+
+}
+
+function scheduleFunctionAtSpecificTime(hour, minute) {
+  const now = new Date();
+  const scheduledTime = new Date();
+  scheduledTime.setHours(hour);
+  scheduledTime.setMinutes(minute);
+  scheduledTime.setSeconds(0);
+
+  // Calculate the time remaining until the next occurrence
+  let timeUntilNextOccurrence = scheduledTime.getTime() - now.getTime();
+  if (timeUntilNextOccurrence < 0) {
+    // If the scheduled time has already passed today, add 24 hours to schedule for the next day
+    timeUntilNextOccurrence += 24 * 60 * 60 * 1000;
+  }
+
+  // Schedule the first function call at the specified time
+  setTimeout(() => {
+    updateTaskStatusRegularly();
+    // Schedule the next function call to repeat daily
+    setInterval(updateTaskStatusRegularly, 24 * 60 * 60 * 1000);
+  }, timeUntilNextOccurrence);
+}
+
+// Call the scheduleFunctionAtSpecificTime function with the desired hour and minute
+scheduleFunctionAtSpecificTime(10, 44); // This will call yourFunction at 12:30 PM every day
 
 
 
