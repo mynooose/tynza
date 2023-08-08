@@ -40,7 +40,7 @@
           <input type="checkbox" name="checkBox" value="<%=listItem._id%>_<%=groupIdReceived%>" onChange="submit()"
             <% if (myUserName !== member.username) { %> disabled <% } %>>
           <input type="hidden" name="requestOrigin" value="requestFromGroupInfo">
-          <p class="one-task <%= listItem.status === 'pending' ? 'task-incomplete' : 'task-complete' %>"><%=listItem.name%></p>
+          <p  spellcheck="true" class="one-task <%= listItem.status === 'pending' ? 'task-incomplete' : 'task-complete' %>"><%=listItem.name%></p>
         </div>
 
          <%if(myUserName === member.username){%>
