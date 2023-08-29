@@ -39,5 +39,5 @@ scheduleFunctionAtSpecificTime(9, 47);
 
 
 app.listen(process.env.PORT || 3000, function () {
-  console.log("Server is up and running at port 3000.");
+  console.log("Server is up and running.");
 })
