@@ -11,10 +11,10 @@
 
       <div class="login-form-area">
           <h1>Create Group</h1>
-              <form class="login-form" action="/groupform" method="post">
+              <form class="login-form" action="/groups/groupform" method="post"  onsubmit="return validateForm()">
                 <div class="lable-input">
                   <label class="form-label">Group Name</label>
-                  <input type="text" name="groupname" value="" autocomplete="off">
+                  <input maxlength="15" type="text" name="groupname" value="" autofocus autocomplete="off">
                 </div>
                 <div class="lable-input">
                   <label class="form-label">Members</label>
@@ -32,6 +32,26 @@
 
 
 </div>
+
+
+<script>
+  function validateForm() {
+    // Get the value of the groupname input
+    const groupNameInput = document.querySelector('input[name="groupname"]');
+    const groupNameValue = groupNameInput.value.trim();
+
+    // Check if the group name is empty or less than 1 character
+    if (groupNameValue.length < 1) {
+      // Show a warning (e.g., alert or a message in the page)
+      alert('Group Name cannot be empty.');
+      // Prevent the form from being submitted
+      return false;
+    }
+
+    // Allow the form to be submitted
+    return true;
+  }
+</script>
 
 
 <%- include('partials/footer'); -%>

@@ -3,8 +3,8 @@
 <div style="display:flex; flex-direction: row;" class="">
   <h1 style="margin-left:30px;">Groups</h1>
 
-  <div style="display:flex; flex-direction: row; align-items:center;  justify-content:center;width: 100%;" class="">
-    <a style="font-size:30px;background-color:#64CCC5;padding:10px;" href="/groupForm">New Group</a>
+  <div style="border-radius:10px; display:flex; flex-direction: row; align-items:center;  justify-content:center;width: 100%;" class="">
+    <a style="font-size:30px;color:white;background-color:#314cf9;padding:10px;" href="/groups/groupForm">New Group</a>
   </div>
 
 </div>
@@ -17,8 +17,8 @@
 <div class="group-names">
   <%for(const group of groupInfo){%>
 
-      <a class="header-nav" href="/groupinfo/<%=group.groupId._id%>">
-        <div class="group-name" style="background-color: <%= colors[j % colors.length] %>;">
+      <a class="header-nav" href="/groups/groupinfo/<%=group.groupId._id%>">
+        <div class="group-name" style="word-break: break-word; background-color: <%= colors[j % colors.length] %>;">
           <p><%= group.groupName %></p>
         </div>
       </a>

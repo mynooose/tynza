@@ -1,0 +1,76 @@
+<%- include('partials/header'); -%>
+
+
+<div class="compose-form" style="margin:40px 100px;">
+
+<h2 style="margin-left:20px;">Share your feedback</h2>
+
+
+
+
+  <form action="/feedback" method="post" class="form-start" >
+    <div class="mb-3">
+
+      <textarea id="feedback" name="feedback" class="form-control" rows="5" cols="60"></textarea>
+    </div>
+    <button type="button" onclick="successPopup()" class="btn btn-primary">Submit</button>
+  </form>
+
+
+
+</div>
+
+<div id="confirmationPopup" class="popup">
+  <div class="popup-content">
+    <p id="confirmationText">Thank you for sharing your feedback.</p>
+    <button class="popup-button-no" onclick="submitForm()">Close</button>
+
+  </div>
+</div>
+
+
+
+
+
+
+
+<script>
+  function successPopup() {
+
+
+    const confirmationText = document.getElementById('confirmationText');
+    confirmationText.textContent = "Thank you for sharing your feedback.";
+
+
+    // Display the confirmation pop-up
+    const popup = document.getElementById('confirmationPopup');
+    popup.style.display = 'flex';
+  }
+
+
+  function submitForm() {
+    // Get the value of the feedback textarea
+    const feedbackValue = document.getElementById('feedback').value;
+
+    // Create a form and add the textarea value as a hidden input
+    const form = document.createElement('form');
+    form.action = '/feedback';
+    form.method = 'POST';
+
+    const feedbackInput = document.createElement('input');
+    feedbackInput.type = 'hidden';
+    feedbackInput.name = 'feedback';
+    feedbackInput.value = feedbackValue;
+    form.appendChild(feedbackInput);
+
+    // Append the form to the body and submit it
+    document.body.appendChild(form);
+    form.submit();
+  }
+</script>
+
+
+
+
+
+<%- include('partials/footer'); -%>

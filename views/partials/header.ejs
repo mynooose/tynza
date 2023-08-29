@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
+
+
   <head>
     <meta charset="utf-8">
     <title>Tynza</title>
@@ -16,8 +18,41 @@
 
     <header>
       <a class="header-nav" aria-current="page" href="/home">Home</a>
-      <a class="header-nav" aria-current="page" href="/groups/">Groups</a>
-      <a class="header-nav" aria-current="page" href="/home">Leaderboard</a>
+      <a class="header-nav" aria-current="page" href="/groups">Groups</a>
+      <a class="header-nav" aria-current="page" href="/feedback">Feedback</a>
       <a class="header-nav" aria-current="page" href="/profile">Profile</a>
 
     </header>
+
+    <script>
+      // Define a list of tabs and their keywords
+      const tabs = [
+        { text: 'Home', keyword: 'home' },
+        { text: 'Groups', keyword: 'groups' },
+        { text: 'Feedback', keyword: 'feedback' },
+        { text: 'Profile', keyword: 'profile' }
+        // Add more tabs here if needed
+      ];
+
+      // Function to set the active class and tab title based on the current URL
+      function setActivePage() {
+        const currentUrl = window.location.href;
+
+        tabs.forEach(tab => {
+          // Check if the current URL contains the keyword of the tab
+          if (currentUrl.includes(tab.keyword)) {
+            // Set the tab title to the tab's text
+            document.title = tab.text + " - Tynza";
+
+            // Find the link in the navigation bar with the keyword of the tab and mark it as active
+            const link = document.querySelector(`.header-nav[href*="${tab.keyword}"]`);
+            if (link) {
+              link.classList.add('active');
+            }
+          }
+        });
+      }
+
+      // Call the function to set the active class and tab title on page load
+      window.onload = setActivePage;
+    </script>

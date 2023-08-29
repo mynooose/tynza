@@ -1,77 +1,125 @@
 <%- include('partials/header'); -%>
 
 <div class="dashboard">
-
-<form class="login-form" action="/addMemberToGroup" method="post">
-      <p style="font-size:60px; color:black;"><%=groupName%></p>
-      <div class="lable-input">
-        <label class="form-label">Add Member:</label>
-        <input type="text" name="newMember"  autocomplete="off">
-        <input type="hidden" name="groupIdReceived" value="<%=groupIdReceived%>">
-      </div>
-      <div class="button-login">
-        <button type="submit" class="login-page-button" name="button">Add</button>
-      </div>
-</form>
+<div class="groupinfo-page">
 
 
-<% const colors = ['#E6E9FE', '#FFE5F8', '#E5F8FF', '#ffffff', '#FDF7C3','#FFE4CC']; %>
-<%let j =0;%>
+        <div class="group-actions">
+                    <div class="group-title">
+                                <p style="font-size:60px; color:black; word-break;"><%=groupName%></p>
+                    </div>
+                    <div class="group-action-form">
+                              <form class="add-member-form" action="/groups/addMemberToGroup" method="post">
+                                    <div class="lable-input-group">
+                                      <!-- <label class="form-label">Enter Member ID:</label> -->
+                                      <!-- <input type="text" name="newMember"  autocomplete="off"> -->
+                                      <!-- <input type="hidden" name="groupIdReceived" value="<%=groupIdReceived%>"> -->
+                                      <div id="inputContainer" style="display: flex; flex-direction: row-reverse;">
+                                              <input
+                                                type="text"
+                                                id="expandingInput"
+                                                style="border: 2px solid #DDE6ED; border-radius: 5px; width: 25%;"
+                                                onclick="expandInput()"
+                                                onblur="shrinkInput()"
+                                                placeholder=""
+                                                name="newMember"
+                                              />
+                                              <input type="hidden" name="groupIdReceived" value="<%=groupIdReceived%>" />
+                                            </div>
+                                    </div>
+                                    <div class="button-group">
+                                      <button type="submit" class="login-page-button" name="button">Add Member</button>
+                                    </div>
 
-<%for(const [member,groupData] of fetchedUsers.entries()){%>
+                              </form>
 
+                              <form class="leave-group-form" action="/groups/leaveGroup" method="post">
 
-    <div class="one-group-at-info" style="background-color: <%= colors[j % colors.length] %>;">
+                                <div class="button-group-leave">
+                                  <button  type="button" value="<%=groupIdReceived%>"
+                                    class="login-page-button-leave" onclick="confirmLeave('<%=groupIdReceived%>','<%=groupName%>')"
+                                    name="button"></button>
+                                </div>
+                              </form>
+                    </div>
 
-    <div class="group-name-home">
-        <h2><%=member.name%></h2>
-        <h4 style="color:#82CD47;">Today : <%=groupData.score%>%</h4>
-        <h4 style="color:#82CD47;">Points : <%=groupData.monthlyScore%></h4>
-    </div>
-    <hr style="width:80%;text-align:left;margin:5px;margin-left : 0">
-
-  <%for(const listItem of groupData.tasks){%>
-
-    <form class="list-form" action="/updateStatus" method="post">
-      <div class="one-task">
-
-        <div class="one-task-content">
-
-          <input type="checkbox" name="checkBox" value="<%=listItem._id%>_<%=groupIdReceived%>" onChange="submit()"
-            <% if (myUserName !== member.username) { %> disabled <% } %>>
-          <input type="hidden" name="requestOrigin" value="requestFromGroupInfo">
-          <p  spellcheck="true" class="one-task <%= listItem.status === 'pending' ? 'task-incomplete' : 'task-complete' %>"><%=listItem.name%></p>
         </div>
+  <hr style="width:100%;text-align:left;margin:5px;margin-left : 0">
+        <div class="group-members">
+                            <% const colors = ['#E6E9FE', '#FFE5F8', '#E5F8FF', '#ffffff', '#FDF7C3','#FFE4CC']; %>
+                            <% const progressColors = ['#314CF9', '#FF00BA', '#00BBFF', '#7C96AB', '#F8DE22','#E48586']; %>
+                            <%let j =0;%>
 
-         <%if(myUserName === member.username){%>
-        <div class="one-task-options">
-          <button style="background-color: <%= colors[j % colors.length] %>; color:#F11A7B;font-size:15px;"
-            type="button" class="deleteButton"
-            onclick="confirmDelete('<%=groupIdReceived%>', '<%=listItem._id%>','<%=listItem.name%>')">Delete</button>
+                            <%for(const [member,groupData] of fetchedUsers.entries()){%>
+
+
+                                <div class="one-group-at-info" style="background-color: <%= colors[j % colors.length] %>;">
+
+                                <div class="group-name-home">
+                                    <h2><%=member.name%></h2>
+                                    <div class="today-progress">
+                                      <div class="progress-bar-container">
+                                          <div class="progress-bar" style="width:<%=groupData.score%>%;
+                                            background-color: <%= progressColors[j % colors.length] %>;"></div>
+                                      </div>
+                                      <div class="progress-number">
+                                          <p><%=groupData.score%>%</p>
+                                      </div>
+                                    </div>
+
+                                    <h4 style="color: <%= progressColors[j % colors.length] %>;">Score : <%=groupData.monthlyScore%></h4>
+                                </div>
+                                <hr style="width:80%;text-align:left;margin:5px;margin-left : 0">
+
+                              <%for(const listItem of groupData.tasks){%>
+
+                                <form class="list-form" action="/list/updateTaskStatus" method="post">
+                                  <div class="one-task <%= listItem.status === 'pending' ? 'task-incomplete' : 'task-complete' %>">
+
+                                    <div class="one-task" >
+
+                                      <input type="checkbox"  onChange="submit()"
+                                        <% if (myUserName !== member.username) { %> disabled <% } %>
+                                        <%= listItem.status === 'complete' ? 'checked' : '' %>>
+                                      <input type="hidden" name="requestOrigin" value="requestFromGroupInfo">
+                                      <input type="hidden" name="checkBox" value="<%=listItem._id%>_<%=groupIdReceived%>">
+                                      <p  spellcheck="true" class="one-task "><%=listItem.name%></p>
+                                    </div>
+
+                                     <%if(myUserName === member.username){%>
+                                    <div class="one-task-options">
+                                      <button style="background-color: <%= colors[j % colors.length] %>; color:#F11A7B;font-size:15px;"
+                                        type="button" class="deleteButton"
+                                        onclick="confirmDelete('<%=groupIdReceived%>', '<%=listItem._id%>','<%=listItem.name%>')">Delete</button>
+                                    </div>
+                                     <%}%>
+
+                                  </div>
+
+                                </form>
+                              <%}%>
+
+                             <%if(myUserName === member.username){%>
+                               <form class="add-item-input" action="/list/addNewItem"  method="post">
+                                 <input maxlength="15" oninput="blockQuotes(this)"
+                                 style ="border-radius:5px; width :70%; border: 2px solid #DDE6ED;" autofocus type="text" name="newItem" minlength="1"  autocomplete="off">
+                                 <button style="background-color : #314CF9; color : white; border-radius :10px"
+                                 type="submit" name="button" value="<%=groupIdReceived%>">+</button>
+                               </form>
+                             <%}%>
+
+
+                            </div>
+
+
+
+                            <%j++;%>
+
+                            <%}%>
+
         </div>
-         <%}%>
-
-      </div>
-
-    </form>
-  <%}%>
-
- <%if(myUserName === member.username){%>
-   <form class="add-item-input" action="/groupinfo" method="post">
-     <input maxlength="15" style ="border-radius:5px; width :70%; border: 2px solid #DDE6ED;" type="text" name="newItem" minlength="1" autofocus autocomplete="off">
-     <button style="background-color : #314CF9; color : white; border-radius :10px"
-     type="submit" name="button" value="<%=groupIdReceived%>">+</button>
-   </form>
- <%}%>
-
 
 </div>
-
-
-
-<%j++;%>
-
-<%}%>
 
 
 
@@ -86,9 +134,17 @@
   </div>
 </div>
 
+<div id="confirmationPopupLeave" class="popup">
+  <div class="popup-content">
+    <p id="confirmationTextLeave">Are you sure you want to leave this group?</p>
+    <button class="popup-button-no" onclick="cancelLeave()">No</button>
+    <button class="popup-button-yes" onclick="proceedLeave()">Yes</button>
+  </div>
+</div>
+
 <script>
 
-  let confirmedGroupId, confirmedTaskId,confirmedTaskName; // Variables to store the groupId and taskId for deletion
+  let confirmedGroupId, confirmedTaskId,confirmedTaskName,confirmedGroupName; // Variables to store the groupId and taskId for deletion
 
   function confirmDelete(groupId, taskId, taskName) {
     // Store groupId and taskId in the global variables
@@ -126,7 +182,7 @@
 
   function deleteTask(groupId, taskId) {
     const form = document.createElement('form');
-    form.action = '/deleteTask'; // Replace this with the actual route on the server for deleting tasks
+    form.action = '/list/deleteTask'; // Replace this with the actual route on the server for deleting tasks
     form.method = 'POST';
 
     const groupIdInput = document.createElement('input');
@@ -145,6 +201,85 @@
     document.body.appendChild(form);
     form.submit();
   }
+
+
+
+
+
+  function confirmLeave(groupId,groupName) {
+    // Store groupId and taskId in the global variables
+    confirmedGroupId = groupId;
+    confirmedGroupName = groupName;
+
+    const confirmationText = document.getElementById('confirmationTextLeave');
+    confirmationText.textContent = `Are you sure you want to leave group : ${confirmedGroupName}?`;
+
+
+    // Display the confirmation pop-up
+    const popup = document.getElementById('confirmationPopupLeave');
+    popup.style.display = 'flex';
+  }
+
+  function proceedLeave() {
+    // Hide the confirmation pop-up
+    const popup = document.getElementById('confirmationPopupLeave');
+    popup.style.display = 'none';
+
+    // Proceed with task deletion
+    leaveGroup(confirmedGroupId, confirmedTaskId);
+  }
+
+
+    function cancelLeave() {
+      // Hide the confirmation pop-up
+      const popup = document.getElementById('confirmationPopupLeave');
+      popup.style.display = 'none';
+    }
+
+  function leaveGroup(groupId, taskId) {
+    const form = document.createElement('form');
+    form.action = '/groups/leaveGroup'; // Replace this with the actual route on the server for deleting tasks
+    form.method = 'POST';
+
+    const groupIdInput = document.createElement('input');
+    groupIdInput.type = 'hidden';
+    groupIdInput.name = 'groupId';
+    groupIdInput.value = groupId;
+
+    // const taskIdInput = document.createElement('input');
+    // taskIdInput.type = 'hidden';
+    // taskIdInput.name = 'taskId';
+    // taskIdInput.value = taskId;
+
+    form.appendChild(groupIdInput);
+    //form.appendChild(taskIdInput);
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  ////////////block quptes/////////////////
+  function blockQuotes(inputElement) {
+    const inputValue = inputElement.value;
+    const sanitizedValue = inputValue.replace(/[\"'\\]/g, '');  // Replace single and double quotes
+    inputElement.value = sanitizedValue;
+  }
+
+
+
+
+
+  function expandInput() {
+   const inputElement = document.getElementById('expandingInput');
+   inputElement.style.width = '100%';
+   inputElement.setAttribute('placeholder', '');
+ }
+
+ function shrinkInput() {
+   const inputElement = document.getElementById('expandingInput');
+   inputElement.style.width = '25%';
+   inputElement.setAttribute('placeholder', '');
+ }
 </script>
 
 
