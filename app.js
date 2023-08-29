@@ -38,6 +38,6 @@ app.use(routes);
 scheduleFunctionAtSpecificTime(9, 47);
 
 
-app.listen(3000, function () {
+app.listen(process.env.PORT || 3000, function () {
   console.log("Server is up and running at port 3000.");
 })
