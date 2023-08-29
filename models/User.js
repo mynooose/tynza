@@ -40,7 +40,7 @@ passport.deserializeUser(function(user, cb) {
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: "https://todo-group.onrender.com/auth/google/secrets",
+    callbackURL: "http://localhost:3000/auth/google/secrets",
     scope: ['profile',"email"]
   },
   function(accessToken, refreshToken, profile, cb) {
