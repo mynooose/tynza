@@ -17,8 +17,9 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(express.static("public"));
 
+const sessionSecret = process.env.SESSION_SECRET || "mynameismynooose";
 app.use(session({
-  secret : process.env.SESSION_SECRET,
+  secret : sessionSecret,
   resave : false,
   saveUninitialized : false,
   cookie: {
