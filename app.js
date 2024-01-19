@@ -32,8 +32,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-//mongoose.connect("mongodb+srv://admin-tynza:12345@cluster0.beel02a.mongodb.net/tynzaDB");
-mongoose.connect("mongodb://localhost:27017/tynzaDB");
+mongoose.connect("mongodb+srv://admin-tynza:12345@cluster0.beel02a.mongodb.net/tynzaDB");
+//mongoose.connect("mongodb://localhost:27017/tynzaDB");
 
 app.use(routes);
 
